@@ -53,7 +53,8 @@ p = get_p()
 def distance(X_train, v, p):
     # Minkowski distance formula (based on Lab 06 module formula)
     # d = (sum(|xi - vi|^p))^1/p
-    distance = (np.sum(np.abs(X_train - v) ** p)) ** (1/p)
+    array = np.array(X_train)
+    distance = (array.sum(np.abs(array - v) ** p)) ** (1/p)
     return distance
 
 # test
