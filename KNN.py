@@ -49,6 +49,12 @@ def get_p():
 k = get_k()
 p = get_p()
 #============================================
-# for testing only
-# TEST = 1000
-#============================================#============================================#============================================
+
+def distance(X_train, v, p):
+    # Minkowski distance formula (based on Lab 06 module formula)
+    # d = (sum(|xi - vi|^p))^1/p
+    distance = (np.sum(np.abs(X_train - v) ** p)) ** (1/p)
+    return distance
+
+# test
+distance(X_train, X_test[0], p) 
