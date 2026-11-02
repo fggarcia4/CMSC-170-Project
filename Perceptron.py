@@ -2,7 +2,7 @@ import csv
 
 import numpy as np
 
-from data_preprocessing import SEED, TIERS, prepare
+from DataPreprocessing import SEED, TIERS, prepare
 
 
 # Sign function
