@@ -151,14 +151,17 @@ def print_results(tiers, predictions):
 if __name__ == "__main__":
     # prepare data
     data = prepare()
-    
+    X_train = data["X_train"]
+    X_test = data["X_test"]
+    Y_train = data["y_train"]
+    Y_test = data["y_test"]
     # show output
     print("Dataset loaded successfully.")
     # data["records"] contains all records, with that, you can access its length
     print(f"Total number of records: {len(data['records'])}")
     # since len(x_train) == len(y_train), we can use either to get the number of training instances
-    print(f"Training instances: {len('X_train')}")
-    print(f"Testing instances : {len('X_test')}")
+    print(f"Training instances: {len(X_train)}")
+    print(f"Testing instances : {len(X_test)}")
     
     k = get_k(len(data["X_train"]))
     p = get_p()
@@ -168,7 +171,7 @@ if __name__ == "__main__":
     knn.training_data(data["X_train"], data["y_train"])
 
     # limit test points (para di mabagal yng pagload,,, comment out or use None to use all data)
-    limit = 2000
+    limit = 100
     
     # predict using knn
     predictions = knn.predict(data["X_test"][:limit]) # use limit,, para from start, to limit lang muna
