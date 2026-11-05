@@ -110,30 +110,30 @@ def print_results(tiers, predictions):
         false_positive = 0
         false_negative = 0
         for i in range(len(tiers)):
-                actual = tiers[i]
-                predicted = predictions[i]
-                if actual == t and predicted == t:
-                    true_positive += 1
-                elif actual != t and predicted == t:
-                    false_positive += 1
-                elif actual == t and predicted != t:
-                    false_negative += 1
-                # calculate precision =======================================
-                if true_positive + false_positive == 0:
-                    precision = 0
-                else:
-                    precision = true_positive / (true_positive + false_positive)
-                # calculate recall =======================================
-                if true_positive + false_negative == 0:
-                    recall = 0
-                else:
-                    recall = true_positive / (true_positive + false_negative)
-                # calculate f1 =======================================
-                if precision + recall == 0:
-                    f1 = 0
-                else: 
-                    f1 = (2 * precision * recall) / (precision + recall)
-                f1_scores.append(f1)
+            actual = tiers[i]
+            predicted = predictions[i]
+            if actual == t and predicted == t:
+                true_positive += 1
+            elif actual != t and predicted == t:
+                false_positive += 1
+            elif actual == t and predicted != t:
+                false_negative += 1
+        # calculate precision =======================================
+        if true_positive + false_positive == 0:
+            precision = 0
+        else:
+            precision = true_positive / (true_positive + false_positive)
+        # calculate recall =======================================
+        if true_positive + false_negative == 0:
+            recall = 0
+        else:
+            recall = true_positive / (true_positive + false_negative)
+        # calculate f1 =======================================
+        if precision + recall == 0:
+            f1 = 0
+        else: 
+            f1 = (2 * precision * recall) / (precision + recall)
+        f1_scores.append(f1)
     macro_f1 = sum(f1_scores) / len(f1_scores)
     # ======================================= ACCURACY
     accuracy = (correct / total) * 100
