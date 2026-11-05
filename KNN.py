@@ -109,8 +109,8 @@ def print_results(tiers, predictions):
         true_positive = 0
         false_positive = 0
         false_negative = 0
-        for i in range(len(Y_test)):
-                actual = Y_test[i]
+        for i in range(len(tiers)):
+                actual = tiers[i]
                 predicted = predictions[i]
                 if actual == t and predicted == t:
                     true_positive += 1
@@ -166,8 +166,11 @@ if __name__ == "__main__":
     # initialize knn
     knn = KNN(k,p)
     knn.training_data(data["X_train"], data["y_train"])
+
+    # limit test points (para di mabagal yng pagload,,, comment out or use None to use all data)
+    limit = 2000
     
     # predict using knn
-    predictions = knn.predict(data["X_test"])
+    predictions = knn.predict(data["X_test"][:limit]) # use limit,, para from start, to limit lang muna
 
-    print_results(data["y_test"], predictions)
+    print_results(data["y_test"][:limit], predictions)
