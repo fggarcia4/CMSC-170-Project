@@ -1,24 +1,61 @@
 # KNN
 import numpy as np
 from DataPreprocessing import TIERS, prepare
-import csv
 
-# LOADS DATA
-# prepare cleans and splits train & test and encode features
-data = prepare()
-X_train = data["X_train"]
-X_test = data["X_test"]
-Y_train = data["y_train"]
-Y_test = data["y_test"]
-#============================================
-# show output
-print("Dataset loaded successfully.")
-# data["records"] contains all records, with that, you can access its length
-print(f"Total number of records: {len(data['records'])}")
-# since len(x_train) == len(y_train), we can use either to get the number of training instances
-print(f"Training instances: {len(X_train)}")
-print(f"Testing instances : {len(X_test)}")
-#============================================
+# k nearest neighbor
+# get the "nearest" using the distance
+class KNN:
+    def __init__(self, k, p): # initialize KNN
+        self.k = k # number of neighbors to look at, odd number to avoid ties
+        self.p = p # Minkowski distance parameter
+
+    # this is to store training data (lazy learning)
+    def training_data(self, X_train, y_train):
+        self.X_train = np.asarray(X_train) # features: type, region, year
+        self.y_train = y_train # tiers: low, middle, high
+
+    # for each test point, get the distances, sort, then get k nearest
+    def predict(self, X_test):
+        # store predictions for each test point
+        predictions = []
+        # for each test point v in x_test, (this will run for each test point)
+        for v in X_test:
+            # get distance for each test point v
+            distances = self.distance(v)
+            # get distances from nearest to farthest (until k nearest only, [:self.k])
+            nearest_distances = np.argsort(distances)[:self.k]
+            # count tiers
+            # get the tiers of the k nearest neighbors, 
+            nearest_tiers = []
+            # for each index i,
+            for i in nearest_distances:
+                # append y_train[i]
+                nearest_tiers.append(self.y_train[i])
+                
+            # using majority count fxn, use that to predict test point's label
+            predicted_tier = self.majority_count(nearest_tiers)
+            # append predicted tier to predictions list
+            predictions.append(predicted_tier)
+        return predictions
+
+    # compute distance between a test point and all other training points
+    def distance(self,  v):
+        # Minkowski distance formula (based on Lab 06 module formula)
+        # d = (sum(|xi - vi|^p))^1/p
+        distance = np.sum(np.abs(self.X_train - v) ** self.p, axis=1) ** (1 / self.p)
+        return distance
+
+    def majority_count(self, tiers):
+        # initialize dictionary count
+        counts = {}
+        for t in tiers:
+            # find tier in dictionary, if not found, set to 0, then add 1 to count
+            counts[t] = counts.get(t, 0) + 1
+            
+        return max(counts, key=counts.get)
+
+
+# =====================================================================================================================
 # GET k AND p FROM USER
 # rule: k is odd, p >= 1
 # created functions for getting k and p from user input, with validation
@@ -46,51 +83,6 @@ def get_p():
             return p
         print("p must be at least 1.")    
 #============================================
-k = get_k()
-p = get_p()
-#============================================
-def distance(X_train, v, p):
-    # Minkowski distance formula (based on Lab 06 module formula)
-    # d = (sum(|xi - vi|^p))^1/p
-    array = np.array(X_train)
-    distance = (np.sum(np.abs(array - v) ** p, axis=1)) ** (1/p)
-    return distance
-
-def prediction(v,k,p):
-    distances = distance(X_train, v, p)
-    # find knn
-    # creates a list containing the distances
-    temp = list(distances)
-    nearest = []
-    
-    for _ in range(k):
-        # initial minimum
-        minimum = 0 
-        for i in range(len(temp)):
-            if temp[i] < temp[minimum]:
-                minimum = i
-        nearest.append(minimum)
-        # inf is a number big enough to be bigger than any other, to avoid duplicates
-        temp[minimum] = float("inf") 
-    
-    # creates a dictionary for counting occurences of each tier in nn (TIER reference in DataPreprocessing.py)
-    counts = {t: 0 for t in TIERS}
-    # dictionary for total distances
-    dists = {t: 0.0 for t in TIERS}
-    
-    for i in nearest:
-        counts[Y_train[i]] += 1
-        dists[Y_train[i]] += distances[i]
-    
-    # choose tier that has the most occurences, if tie, choose one with smallest dist
-    best_tier = None
-    for t in TIERS:
-        if counts[t] == 0:
-            continue
-        if (best_tier is None or (counts[t] > counts[best_tier]) or (counts[t] == counts[best_tier] and dists[t] < dists[best_tier])):
-            best_tier = t
-    return best_tier
-
 def print_results(tiers, predictions):
     # amount of tests checked
     total = len(tiers)
@@ -121,7 +113,6 @@ def print_results(tiers, predictions):
         for i in range(len(Y_test)):
                 actual = Y_test[i]
                 predicted = predictions[i]
-
                 if actual == t and predicted == t:
                     true_positive += 1
 
@@ -130,33 +121,27 @@ def print_results(tiers, predictions):
 
                 elif actual == t and predicted != t:
                     false_negative += 1
-
-                # calculate precision
+                # calculate precision =======================================
                 if true_positive + false_positive == 0:
                     precision = 0
                 else:
                     precision = true_positive / (true_positive + false_positive)
-
-                # calculate recall
+                # calculate recall =======================================
                 if true_positive + false_negative == 0:
                     recall = 0
                 else:
                     recall = true_positive / (true_positive + false_negative)
-
-                # calculate f1
+                # calculate f1 =======================================
                 if precision + recall == 0:
                     f1 = 0
                 else: 
                     f1 = (2 * precision * recall) / (precision + recall)
                 
                 f1_scores.append(f1)
-
     macro_f1 = sum(f1_scores) / len(f1_scores)
-
     # ======================================= ACCURACY
     accuracy = (correct / total) * 100
-    
-    
+    # ======================================= PRINTTT
     print("KNN RESULTS")
     print(f"Correct predictions: {correct} ({(correct / total) * 100:.2f}%)")
     print(f"Incorrect predictions: {incorrect} ({(incorrect / total) * 100:.2f}%)")
@@ -166,9 +151,27 @@ def print_results(tiers, predictions):
     print(f"Macro-F1: {macro_f1:.4f}")
     print(f"Off-by-two: {off_by_two} ({(off_by_two / total) * 100:.2f}%)")
 
+# ===================================================================================================================== 
+if __name__ == "__main__":
+    # prepare data
+    data = prepare()
+    
+    # show output
+    print("Dataset loaded successfully.")
+    # data["records"] contains all records, with that, you can access its length
+    print(f"Total number of records: {len(data['records'])}")
+    # since len(x_train) == len(y_train), we can use either to get the number of training instances
+    print(f"Training instances: {len('X_train')}")
+    print(f"Testing instances : {len('X_test')}")
+    
+    k = get_k(len(data["X_train"]))
+    p = get_p()
 
-# tests
-dis = distance(X_train, X_test[0], p)
-print(len(dis))
-prdctn = prediction(X_test[0], k, p)   
-print_results(Y_test, [prediction(X_test[i], k, p) for i in range(len(X_test))])
+    # initialize knn
+    knn = KNN(k,p)
+    knn.training_data(data["X_train"], data["y_train"])
+    
+    # predict using knn
+    predictions = knn.predict(data["X_test"])
+
+    print_results(data["y_test"], predictions)
