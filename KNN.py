@@ -59,7 +59,7 @@ class KNN:
 # GET k AND p FROM USER
 # rule: k is odd, p >= 1
 # created functions for getting k and p from user input, with validation
-def get_k():
+def get_k(train):
     while True:
         try:
             k = int(input("Enter an odd value of k: ")) # prompt user for k
@@ -68,7 +68,7 @@ def get_k():
             print("Invalid input. Please enter an integer value.")
             continue
         # if k is not positive, odd integer + greater or equal to training size, prompt again
-        if k > 0 and k % 2 == 1 and k <= len(X_train):
+        if k > 0 and k % 2 == 1 and k <= train:
             return k
         print("k must be a positive odd integer.")
 # same comments from get_k, this is tailored specifically for p -> a float that is greater than or equal to 1
@@ -109,16 +109,13 @@ def print_results(tiers, predictions):
         true_positive = 0
         false_positive = 0
         false_negative = 0
-    
         for i in range(len(Y_test)):
                 actual = Y_test[i]
                 predicted = predictions[i]
                 if actual == t and predicted == t:
                     true_positive += 1
-
                 elif actual != t and predicted == t:
                     false_positive += 1
-
                 elif actual == t and predicted != t:
                     false_negative += 1
                 # calculate precision =======================================
@@ -136,7 +133,6 @@ def print_results(tiers, predictions):
                     f1 = 0
                 else: 
                     f1 = (2 * precision * recall) / (precision + recall)
-                
                 f1_scores.append(f1)
     macro_f1 = sum(f1_scores) / len(f1_scores)
     # ======================================= ACCURACY
