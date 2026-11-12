@@ -7,8 +7,9 @@ class NaiveBayes:
         self.tiers = ["Low", "Middle", "High"] # budget tiers
         self.k = 1 # i am using the add one smoothing method as seen on the handout
 
-
+    # trains the data
     def fit(self, records, labels):
+
         self.tier_counts = {} # store the number of records in each tier
         self.type_counts = {} # store project type (category) counts for each tier
         self.region_counts = {} # store region counts for each tier
@@ -22,6 +23,7 @@ class NaiveBayes:
             self.all_types.add(record["type"]) # unique category add to the list
             self.all_regions.add(record["region"]) # unique region add to the list
 
+        # ------------------------------------------------------------------------
         for budget_tier in self.tiers:
             tier_records = [ # select the records for the current tier
                 records[i]
@@ -32,6 +34,8 @@ class NaiveBayes:
             self.tier_counts[budget_tier] = len(tier_records) # count the training records for this tier
             self.type_counts[budget_tier] = {} # dictionary for project type counts in this tier
             self.region_counts[budget_tier] = {} # dictionary for region counts in this tier
+
+            # print(self.type_counts)
 
             years = [] # empty list to store the years of this tier
 
@@ -56,6 +60,7 @@ class NaiveBayes:
                 # add the infrastructure year to the list of years
                 years.append(year)
 
+            print(self.type_counts[budget_tier])
             # this is to calculate which years are most seen in the tier
             # ------------------------------------------------------------------------
             mean = sum(years) / len(years) # calculate the average infrastructure year for this class
@@ -63,6 +68,7 @@ class NaiveBayes:
             self.year_means[budget_tier] = mean # store the calculated average year for this tier
             self.year_variances[budget_tier] = max(variance, 1e-9) # store the variance and prevent it from becoming exactly zero
             # ------------------------------------------------------------------------
+        # ------------------------------------------------------------------------
 
     # GAUSSIAN PROBABILITY
     # this part calculate how likely the year belongs to each tier
@@ -108,6 +114,7 @@ class NaiveBayes:
 
             # --------------------------------------------------------------
             # calculate the project type probability using Add-One Smoothing
+            # https://www.geeksforgeeks.org/nlp/additive-smoothing-techniques-in-language-models/
             type_probability = (type_count + self.k) / (self.tier_counts[budget_tier] + self.k * len(self.all_types))
             # --------------------------------------------------------------
 
@@ -143,7 +150,7 @@ class NaiveBayes:
             )
             # --------------------------------------------------------------
 
-        # return the class with the highest calculated score
+        # return the tier with the highest score
         return max(scores, key=scores.get)
         # ------------------------------------------------------------------------
 
@@ -267,10 +274,23 @@ print("Off-by-two Rate: ", round(off_by_two_rate * 100, 2), "%")
 # --------------------------------------------------------------
 print("\nSAMPLE PREDICTION")
 print("-------------------------")
-print("Project:", X_test[0])
-print("Actual tier:", Y_test[0])
-print("Predicted tier:", predictions[0])
-print("Project:", X_test[1])
-print("Actual tier:", Y_test[1])
-print("Predicted tier:", predictions[1])
+print("Project:", X_test[2000])
+print("Actual tier:", Y_test[2000])
+print("Predicted tier:", predictions[2000])
+print("\n")
+print("Project:", X_test[1200])
+print("Actual tier:", Y_test[1200])
+print("Predicted tier:", predictions[1200])
+print("\n")
+print("Project:", X_test[2500])
+print("Actual tier:", Y_test[2500])
+print("Predicted tier:", predictions[2500])
+print("\n")
+print("Project:", X_test[107])
+print("Actual tier:", Y_test[107])
+print("Predicted tier:", predictions[107])
+print("\n")
+print("Project:", X_test[2050])
+print("Actual tier:", Y_test[2050])
+print("Predicted tier:", predictions[2050])
 # --------------------------------------------------------------

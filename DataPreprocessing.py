@@ -11,7 +11,7 @@ TIERS = ["Low", "Middle", "High"]
 CSV_NAME = "dpwh_transparency_data.csv"
 SEED = 42
 LOW_MAX = 5_000_000
-MIDDLE_MAX = 8_999_999
+MIDDLE_MAX = 18_999_999
 
 
 def find_csv(argv=None):

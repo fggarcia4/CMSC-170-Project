@@ -3,8 +3,10 @@ __pycache__/
 *.py[cod]
 
 # Virtual environment
+myenv/
 venv/
 .venv/
 
 # Other
 .env
+.@
