@@ -1,4 +1,3 @@
-
 import csv
 import time
 from collections import Counter
@@ -157,20 +156,24 @@ class Perceptron:
 def evaluate(y_true, y_pred):
 
     idx = {t: i for i, t in enumerate(TIERS)}
+    k = len(TIERS)
 
     correct = 0
     total = len(y_true)
 
-    tp = np.zeros(3)
-    fp = np.zeros(3)
-    fn = np.zeros(3)
+    tp = np.zeros(k)
+    fp = np.zeros(k)
+    fn = np.zeros(k)
 
-    off_by_two = 0
+    tier_total = np.zeros(k)       # actual samples per tier
+    tier_off_by_two = np.zeros(k)  # Low<->High errors per actual tier
 
     for actual, predicted in zip(y_true, y_pred):
 
         a = idx[actual]
         p = idx[predicted]
+
+        tier_total[a] += 1
 
         if actual == predicted:
             correct += 1
@@ -180,28 +183,78 @@ def evaluate(y_true, y_pred):
         fn[a] += (a != p)
 
         if abs(a - p) == 2:
-            off_by_two += 1
+            tier_off_by_two[a] += 1
 
     accuracy = correct / total
 
+    precisions = []
+    recalls = []
     f1_scores = []
 
-    for k in range(3):
+    for i in range(k):
 
-        precision = tp[k] / (tp[k] + fp[k]) if tp[k] + fp[k] else 0
-        recall = tp[k] / (tp[k] + fn[k]) if tp[k] + fn[k] else 0
+        precision = tp[i] / (tp[i] + fp[i]) if tp[i] + fp[i] else 0
+        recall = tp[i] / (tp[i] + fn[i]) if tp[i] + fn[i] else 0
 
         f1 = (
             2 * precision * recall / (precision + recall)
             if precision + recall else 0
         )
 
+        precisions.append(precision)
+        recalls.append(recall)
         f1_scores.append(f1)
 
-    macro_f1 = float(np.mean(f1_scores))
-    off_by_two_rate = off_by_two / total
+    return {
+        "correct": correct,
+        "incorrect": total - correct,
+        "accuracy": accuracy,
+        "macro_f1": float(np.mean(f1_scores)),
+        "macro_precision": float(np.mean(precisions)),
+        "macro_recall": float(np.mean(recalls)),
+        "precision": precisions,
+        "recall": recalls,
+        "f1": f1_scores,
+        "tier_total": tier_total,
+        "tier_off_by_two": tier_off_by_two,
+    }
 
-    return accuracy, macro_f1, off_by_two_rate
+
+# Print results in the same layout as the Naive Bayes report
+def print_report(results, title="PERCEPTRON RESULTS"):
+
+    print(f"\n{title}")
+    print("-" * 25)
+    print(f"Correct predictions: {results['correct']}")
+    print(f"Incorrect predictions: {results['incorrect']}")
+
+    print("\nEVALUATION METRICS")
+    print("-" * 25)
+    print(f"Macro-F1 Score: {results['macro_f1']:.4f}")
+    print(f"Macro-Precision: {results['macro_precision']:.4f}")
+    print(f"Macro-Recall: {results['macro_recall']:.4f}")
+    print(f"Accuracy: {results['accuracy'] * 100:.2f} %")
+
+    print("\nPRECISION / RECALL / F1 PER TIER")
+    print("-" * 25)
+
+    for i, tier in enumerate(TIERS):
+        print(
+            f"{tier}: "
+            f"Precision {results['precision'][i] * 100:.2f} % / "
+            f"Recall {results['recall'][i] * 100:.2f} % / "
+            f"F1 {results['f1'][i]:.4f}"
+        )
+
+    print("\nOFF-BY-TWO RATE PER TIER")
+    print("-" * 25)
+
+    for i, tier in enumerate(TIERS):
+        errors = int(results["tier_off_by_two"][i])
+        total = results["tier_total"][i]
+        rate = errors / total * 100 if total else 0.0
+
+        print(f"{tier}: {errors} errors / {rate:.2f} %")
 
 
 if __name__ == "__main__":
@@ -232,7 +285,7 @@ if __name__ == "__main__":
     )
 
     # Train model
-    start = time.time()
+    start = time.perf_counter()
 
     model = Perceptron(
         eta=0.1,
@@ -240,17 +293,14 @@ if __name__ == "__main__":
         verbose=True
     ).fit(X_train, data["y_train"])
 
-    print(f"Training time: {time.time() - start:.2f}s")
+    print(f"Training time: {time.perf_counter() - start:.2f}s")
 
     # Test predictions
     pred = model.predict(X_test)
 
-    # Calculate metrics
-    acc, mf1, o2 = evaluate(data["y_test"], pred)
-
-    print(f"Accuracy      : {acc:.4f}")
-    print(f"Macro-F1      : {mf1:.4f}")
-    print(f"Off-by-two    : {o2:.4f} (Low<->High errors)")
+    # Calculate and print metrics
+    results = evaluate(data["y_test"], pred)
+    print_report(results)
 
     # Export predictions
     with open(
@@ -281,7 +331,7 @@ if __name__ == "__main__":
                 r["budget"],
                 a,
                 p,
-                a == p\
+                a == p
             ])
 
     print("\nSaved perceptron_predictions.csv")
