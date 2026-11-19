@@ -281,7 +281,7 @@ if __name__ == "__main__":
                 r["budget"],
                 a,
                 p,
-                a == p
+                a == p\
             ])
 
     print("\nSaved perceptron_predictions.csv")
