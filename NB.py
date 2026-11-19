@@ -1,296 +1,524 @@
 from DataPreprocessing import prepare
 import math
 
-# NAIVE BAYES ALGORITHM
-class NaiveBayes:
-    def __init__(self): # initialize the naive bayes
-        self.tiers = ["Low", "Middle", "High"] # budget tiers
-        self.k = 1 # i am using the add one smoothing method as seen on the handout
 
-    # trains the data
+# --------------------------------------------------------------
+# NAIVE BAYES ALGORITHM
+# --------------------------------------------------------------
+
+class NaiveBayes:
+
+    def __init__(self):
+
+        # eight input features
+        self.features = [
+            "category",
+            "componentCategory",
+            "region",
+            "province",
+            "contractor",
+            "infraYear",
+            "programName",
+            "sourceOfFunds"
+        ]
+
+        # 2 types of features used
+        # numeric (digits) and categorical (characters)
+        self.numeric_features = ["infraYear"] # infrayear is the only numeric feature aside for target (budget)
+
+        # categorical features
+        self.categorical_features = [
+            feature for feature in self.features
+            if feature not in self.numeric_features
+        ]
+
+        # tiers
+        # low, middle, high
+        self.tiers = ["Low", "Middle", "High"]
+
+        # add-one smoothing to prevent 0 probability
+        self.k = 1
+
+
+    # ----------------------------------------------------------
+    # CONVERT FEATURE VALUES
+    # ----------------------------------------------------------
+
+    # converts all missing values into unknown
+
+    def categorical_value(self, value):
+
+        if value is None or str(value).strip() == "":
+            return "Unknown"
+
+        return str(value).strip()
+
+
+    # convert digits to float
+    # will help in solving gaussian for decimals
+    def numeric_value(self, value):
+
+        try:
+            if value is None or str(value).strip() == "":
+                return None
+
+            return float(value)
+
+        except (ValueError, TypeError):
+            return None
+
+
+    # ----------------------------------------------------------
+    # TRAINING
+    # ----------------------------------------------------------
+
     def fit(self, records, labels):
 
-        self.tier_counts = {} # store the number of records in each tier
-        self.type_counts = {} # store project type (category) counts for each tier
-        self.region_counts = {} # store region counts for each tier
-        self.year_means = {} # store the average year for each tier
-        self.year_variances = {} # store the year variance for each tier
-        self.all_types = set() # store all unique project types
-        self.all_regions = set() # store all unique regions
+        # count how many training records belong to each tier
+        self.tier_counts = {}
 
-        # iterate through every record
-        for record in records:
-            self.all_types.add(record["type"]) # unique category add to the list
-            self.all_regions.add(record["region"]) # unique region add to the list
+        # counts category occurences per tier
+        self.categorical_counts = {}
 
-        # ------------------------------------------------------------------------
+        # store all possible categorical values
+        self.all_categories = {}
+
+        # Store the mean and variance of infraYear
+        self.mean = {}
+        self.variance = {}
+
+
+        # ------------------------------------------------------
+        # GET ALL POSSIBLE CATEGORICAL VALUES
+        # ------------------------------------------------------
+
+        for feature in self.categorical_features:
+
+            self.all_categories[feature] = set()
+
+            for record in records:
+
+                value = self.categorical_value(
+                    record.get(feature)
+                )
+
+                self.all_categories[feature].add(value)
+
+
+        # ------------------------------------------------------
+        # CALCULATE VALUES FOR EACH BUDGET TIER
+        # ------------------------------------------------------
+
         for budget_tier in self.tiers:
-            tier_records = [ # select the records for the current tier
+
+            # get all records that belong to the current tier
+            tier_records = [
                 records[i]
                 for i in range(len(labels))
                 if labels[i] == budget_tier
             ]
 
-            self.tier_counts[budget_tier] = len(tier_records) # count the training records for this tier
-            self.type_counts[budget_tier] = {} # dictionary for project type counts in this tier
-            self.region_counts[budget_tier] = {} # dictionary for region counts in this tier
+            # count the records in the current tier
+            self.tier_counts[budget_tier] = len(tier_records)
 
-            # print(self.type_counts)
+            self.categorical_counts[budget_tier] = {}
+            self.mean[budget_tier] = {}
+            self.variance[budget_tier] = {}
 
-            years = [] # empty list to store the years of this tier
 
-            # iterate through every record in this tier
-            for record in tier_records:
-                project_type = record["type"] # get project type (category)
-                region = record["region"] # get region
-                year = record["year"] # get the infrayear
+            # --------------------------------------------------
+            # COUNT CATEGORICAL FEATURES
+            # --------------------------------------------------
 
-                # count how many times this category appears in the tier
-                # get() returns 0 if the project type has not been counted yet
-                self.type_counts[budget_tier][project_type] = (
-                    self.type_counts[budget_tier].get(project_type, 0) + 1
-                )
+            for feature in self.categorical_features:
 
-                # count how many times this region appears in this tier
-                # get() returns 0 if the region has not been counted yet
-                self.region_counts[budget_tier][region] = (
-                    self.region_counts[budget_tier].get(region, 0) + 1
-                )
+                self.categorical_counts[budget_tier][feature] = {}
 
-                # add the infrastructure year to the list of years
-                years.append(year)
+                for record in tier_records:
 
-            print(self.type_counts[budget_tier])
-            # this is to calculate which years are most seen in the tier
-            # ------------------------------------------------------------------------
-            mean = sum(years) / len(years) # calculate the average infrastructure year for this class
-            variance = sum((year - mean) ** 2 for year in years) / len(years) # calculate the variance to measure how spread out the years are
-            self.year_means[budget_tier] = mean # store the calculated average year for this tier
-            self.year_variances[budget_tier] = max(variance, 1e-9) # store the variance and prevent it from becoming exactly zero
-            # ------------------------------------------------------------------------
-        # ------------------------------------------------------------------------
+                    value = self.categorical_value(
+                        record.get(feature)
+                    )
 
+                    # add one to the count of the current value
+                    self.categorical_counts[budget_tier][feature][value] = (
+                        self.categorical_counts[budget_tier][feature].get(value, 0) + 1
+                    )
+
+
+            # --------------------------------------------------
+            # CALCULATE MEAN AND VARIANCE OF infraYear
+            # --------------------------------------------------
+
+            for feature in self.numeric_features:
+
+                values = []
+
+                for record in tier_records:
+
+                    value = self.numeric_value(
+                        record.get(feature)
+                    )
+
+                    if value is not None:
+                        values.append(value)
+
+                if len(values) > 0:
+
+                    # calculate the average year
+                    mean = sum(values) / len(values)
+
+                    # calculate the variance
+                    variance = sum(
+                        (value - mean) ** 2 for value in values
+                    ) / len(values)
+
+                    self.mean[budget_tier][feature] = mean
+
+                    # prevent variance from becoming zero.
+                    self.variance[budget_tier][feature] = max(
+                        variance, 1e-9
+                    )
+
+                else:
+
+                    # Use safe default values if no valid year exists.
+                    self.mean[budget_tier][feature] = 0
+                    self.variance[budget_tier][feature] = 1
+
+
+    # ----------------------------------------------------------
     # GAUSSIAN PROBABILITY
-    # this part calculate how likely the year belongs to each tier
-    # ------------------------------------------------------------------------
-    def gaussian_log_probability(self, year, mean, variance):
-        # calculate the Gaussian probability in logarithmic form
+    # ----------------------------------------------------------
+
+    def gaussian_log_probability(self, value, mean, variance):
+
         return (
-            -0.5 * math.log(2 * math.pi * variance) # calculates the normalization part of gaussian
-            - ((year - mean) ** 2) / (2 * variance) # measures how far the year is from the avg year
+            -0.5 * math.log(2 * math.pi * variance)
+            - ((value - mean) ** 2) / (2 * variance)
         )
-    # ------------------------------------------------------------------------
 
+
+    # ----------------------------------------------------------
     # PREDICTION
-    # this function predicts the budget class of one infrastructure project
-    # ------------------------------------------------------------------------
-    def predict_one(self, record):
-        total_records = sum(self.tier_counts.values()) # calculate the total number of training records
-        scores = {} # create an empty dictionary to store the scores of each tier
+    # ----------------------------------------------------------
 
-         #calculate the score for each possible budget tier
+    def predict_one(self, record):
+
+        # get the total number of training records
+        total_records = sum(self.tier_counts.values())
+
+        scores = {}
+
+        # calculate the probability for each budget tier
         for budget_tier in self.tiers:
 
-            # --------------------------------------------------------------
-            # check if the current tier has no training records
+            # skip a tier if it has no training records
             if self.tier_counts[budget_tier] == 0:
-                # skip if cant be used
                 continue
-            # --------------------------------------------------------------
 
-            # --------------------------------------------------------------
-            # calculate the prior probability of the current tier
-            # prior = number of records in the class / total training records
+            # calculate the prior probability.
             prior = self.tier_counts[budget_tier] / total_records
-            # --------------------------------------------------------------
 
-            # --------------------------------------------------------------
-            # get the number of times the project's type appears in this tier
-            # return 0 if the project type has never appeared in this tier
-            type_count = self.type_counts[budget_tier].get(
-                record["type"], 0
-            )
-            # --------------------------------------------------------------
+            score = math.log(prior)
 
-            # --------------------------------------------------------------
-            # calculate the project type probability using Add-One Smoothing
-            # https://www.geeksforgeeks.org/nlp/additive-smoothing-techniques-in-language-models/
-            type_probability = (type_count + self.k) / (self.tier_counts[budget_tier] + self.k * len(self.all_types))
-            # --------------------------------------------------------------
 
-            # --------------------------------------------------------------
-            # get the number of times the project's region appears in this tier
-            # return 0 if the region has never appeared in this tier
-            region_count = self.region_counts[budget_tier].get(
-                record["region"], 0
-            )
-            # --------------------------------------------------------------
+            # --------------------------------------------------
+            # CATEGORICAL FEATURE PROBABILITIES
+            # --------------------------------------------------
 
-            # --------------------------------------------------------------
-            # calculate the region probability using Add-One Smoothing
-            region_probability = (region_count + self.k) / (self.tier_counts[budget_tier] + self.k * len(self.all_regions))
-            # --------------------------------------------------------------
+            for feature in self.categorical_features:
 
-            # --------------------------------------------------------------
-            # calculate the Gaussian log probability of the infrastructure year
-            year_probability = self.gaussian_log_probability(
-                record["year"], # year of the project being predicted
-                self.year_means[budget_tier], # average year of the current tier
-                self.year_variances[budget_tier] # year variance of the current tier
-            )
-            # --------------------------------------------------------------
+                value = self.categorical_value(
+                    record.get(feature)
+                )
 
-            # --------------------------------------------------------------
-            # combine the probabilities using logarithms
-            scores[budget_tier] = (
-                math.log(prior)
-                + math.log(type_probability)
-                + math.log(region_probability)
-                + year_probability
-            )
-            # --------------------------------------------------------------
+                # get the number of times this value appeared in the current budget tier
+                value_count = self.categorical_counts[budget_tier][feature].get(
+                    value, 0
+                )
 
-        # return the tier with the highest score
+                # get the number of possible values for this feature
+                size = len(self.all_categories[feature])
+
+                # apply add-one smoothing.
+                probability = (value_count + self.k) / (self.tier_counts[budget_tier] + self.k * (size + 1))
+
+                score += math.log(probability)
+
+
+            # --------------------------------------------------
+            # INFRAYEAR PROBABILITY
+            # --------------------------------------------------
+
+            for feature in self.numeric_features:
+
+                value = self.numeric_value(
+                    record.get(feature)
+                )
+
+                # skip if its value is missing
+                if value is not None:
+
+                    mean = self.mean[budget_tier][feature]
+
+                    variance = self.variance[budget_tier][feature]
+
+                    score += self.gaussian_log_probability(value, mean, variance)
+
+
+            # store the final score for the current tier
+            scores[budget_tier] = score
+
+        # return the tier with the highest probability score
         return max(scores, key=scores.get)
-        # ------------------------------------------------------------------------
 
-
-# MAIN PROGRAM
-data = prepare()
 
 # --------------------------------------------------------------
-X_train = data["train_records"]
-X_test = data["test_records"]
-Y_train = data["y_train"]
-Y_test = data["y_test"]
+# EVALUATION
 # --------------------------------------------------------------
 
-# --------------------------------------------------------------
-print("\nNAIVE BAYES DATA")
-print("-------------------------")
-print("Training records:", len(X_train))
-print("Testing records:", len(X_test))
-# --------------------------------------------------------------
+def evaluate_model(actual_tiers, predictions):
 
-model = NaiveBayes()
+    tiers = ["Low", "Middle", "High"]
 
-model.fit(X_train, Y_train)
+    correct = 0
 
-predictions = [
-    model.predict_one(record)
-    for record in X_test
-]
+    for i in range(len(actual_tiers)):
 
-correct = 0
+        if predictions[i] == actual_tiers[i]:
+            correct += 1
 
-for i in range(len(Y_test)):
-    if predictions[i] == Y_test[i]:
-        correct += 1
 
-# EVALUATION METRIC COMPUTATION
-tiers = ["Low", "Middle", "High"]
-# --------------------------------------------------------------
-# Macro-F1
-f1_scores = []
-for budget_tier in tiers:
-    true_positive = 0
-    false_positive = 0
-    false_negative = 0
+    # ----------------------------------------------------------
+    # MACRO-F1 SCORE
+    # ----------------------------------------------------------
 
-    for i in range(len(Y_test)):
-        actual = Y_test[i]
+    f1_scores = []
+
+    for budget_tier in tiers:
+
+        true_positive = 0
+        false_positive = 0
+        false_negative = 0
+
+        for i in range(len(actual_tiers)):
+
+            actual = actual_tiers[i]
+            predicted = predictions[i]
+
+            if actual == budget_tier and predicted == budget_tier:
+                true_positive += 1
+
+            elif actual != budget_tier and predicted == budget_tier:
+                false_positive += 1
+
+            elif actual == budget_tier and predicted != budget_tier:
+                false_negative += 1
+
+
+        # precision
+        if true_positive + false_positive == 0:
+            precision = 0
+        else:
+            precision = true_positive / (true_positive + false_positive)
+
+
+        # recall
+        if true_positive + false_negative == 0:
+            recall = 0
+        else:
+            recall = true_positive / (true_positive + false_negative)
+
+
+        # F1 score
+        if precision + recall == 0:
+            f1 = 0
+        else:
+            f1 = (2 * precision * recall) / (precision + recall)
+
+        f1_scores.append(f1)
+
+
+    # get the average F1 score of all three tiers.
+    macro_f1 = sum(f1_scores) / len(f1_scores)
+
+
+    # ----------------------------------------------------------
+    # ACCURACY
+    # ----------------------------------------------------------
+
+    accuracy = (correct / len(actual_tiers)) * 100
+
+
+    # ----------------------------------------------------------
+    # OFF-BY-TWO RATE PER TIER
+    # ----------------------------------------------------------
+
+    off_by_two = {
+        "Low": 0,
+        "Middle": 0,
+        "High": 0
+    }
+
+    tier_totals = {
+        "Low": 0,
+        "Middle": 0,
+        "High": 0
+    }
+
+    for i in range(len(actual_tiers)):
+
+        actual = actual_tiers[i]
         predicted = predictions[i]
 
-        if actual == budget_tier and predicted == budget_tier:
-            true_positive += 1
+        # count the total actual projects for each tier
+        tier_totals[actual] += 1
 
-        elif actual != budget_tier and predicted == budget_tier:
-            false_positive += 1
+        actual_position = tiers.index(actual)
+        predicted_position = tiers.index(predicted)
 
-        elif actual == budget_tier and predicted != budget_tier:
-            false_negative += 1
+        difference = abs(actual_position - predicted_position)
 
-    # calculate precision
-    if true_positive + false_positive == 0:
-        precision = 0
-    else:
-        precision = true_positive / (true_positive + false_positive)
+        # count errors that are two tiers away
+        # the error is assigned to the actual tier
+        if difference == 2:
+            off_by_two[actual] += 1
 
-    # calculate recall
-    if true_positive + false_negative == 0:
-        recall = 0
-    else:
-        recall = true_positive / (true_positive + false_negative)
 
-    # calculate f1
-    if precision + recall == 0:
-        f1 = 0
-    else: 
-        f1 = (2 * precision * recall) / (precision + recall)
-    
-    f1_scores.append(f1)
+    # calculate the off-by-two rate for each tier
+    off_by_two_rate = {}
 
-macro_f1 = sum(f1_scores) / len(f1_scores)
-# --------------------------------------------------------------
+    for budget_tier in tiers:
 
-# --------------------------------------------------------------
-# Accuracy
-accuracy = (correct / len(Y_test)) * 100
-# --------------------------------------------------------------
+        if tier_totals[budget_tier] == 0:
+            off_by_two_rate[budget_tier] = 0
+        else:
+            off_by_two_rate[budget_tier] = (
+                off_by_two[budget_tier] / tier_totals[budget_tier]
+            ) * 100
 
-# --------------------------------------------------------------
-# Off-by-two Rate
-off_by_two = 0
 
-for i in range(len(Y_test)):
-    actual = Y_test[i]
-    predicted = predictions[i]
+    return {
+        "correct": correct,
+        "incorrect": len(actual_tiers) - correct,
+        "macro_f1": macro_f1,
+        "accuracy": accuracy,
+        "off_by_two": off_by_two,
+        "off_by_two_rate": off_by_two_rate
+    }
 
-    actual_position = tiers.index(actual)
-    predicted_position = tiers.index(predicted)
-
-    difference = abs(actual_position - predicted_position)
-
-    if difference == 2:
-        off_by_two += 1
-
-off_by_two_rate = off_by_two / len(Y_test)
-# --------------------------------------------------------------
 
 # --------------------------------------------------------------
-print("\nNAIVE BAYES RESULTS")
-print("-------------------------")
-print("Correct predictions:", correct)
-print("Incorrect predictions:", len(Y_test) - correct)
+# MAIN PROGRAM
 # --------------------------------------------------------------
 
-# --------------------------------------------------------------
-print("\nEVALUATION METRIC")
-print("Macro-F1 Score: ", round(macro_f1, 4))
-print("Accuracy: ", round(accuracy, 2), "%")
-print("Off-by-two Rate: ", round(off_by_two_rate * 100, 2), "%")
-# --------------------------------------------------------------
+if __name__ == "__main__":
 
-# --------------------------------------------------------------
-print("\nSAMPLE PREDICTION")
-print("-------------------------")
-print("Project:", X_test[2000])
-print("Actual tier:", Y_test[2000])
-print("Predicted tier:", predictions[2000])
-print("\n")
-print("Project:", X_test[1200])
-print("Actual tier:", Y_test[1200])
-print("Predicted tier:", predictions[1200])
-print("\n")
-print("Project:", X_test[2500])
-print("Actual tier:", Y_test[2500])
-print("Predicted tier:", predictions[2500])
-print("\n")
-print("Project:", X_test[107])
-print("Actual tier:", Y_test[107])
-print("Predicted tier:", predictions[107])
-print("\n")
-print("Project:", X_test[2050])
-print("Actual tier:", Y_test[2050])
-print("Predicted tier:", predictions[2050])
-# --------------------------------------------------------------
+    # get the cleaned and stratified data from DataPreprocessing
+    data = prepare()
+
+    X_train = data["train_projects"]
+    X_test = data["test_projects"]
+
+    Y_train = data["y_train"]
+    Y_test = data["y_test"]
+
+
+    # ----------------------------------------------------------
+    # TRAINING DATA
+    # ----------------------------------------------------------
+
+    print("\nNAIVE BAYES DATA")
+    print("-------------------------")
+
+    print("Training records:", len(X_train))
+    print("Testing records:", len(X_test))
+
+
+    # ----------------------------------------------------------
+    # TRAIN NAIVE BAYES
+    # ----------------------------------------------------------
+
+    model = NaiveBayes()
+
+    model.fit(X_train, Y_train)
+
+
+    # ----------------------------------------------------------
+    # MAKE PREDICTIONS
+    # ----------------------------------------------------------
+
+    predictions = []
+
+    for record in X_test:
+
+        prediction = model.predict_one(record)
+
+        predictions.append(prediction)
+
+
+    # ----------------------------------------------------------
+    # EVALUATION
+    # ----------------------------------------------------------
+
+    results = evaluate_model(Y_test, predictions)
+
+
+    # ----------------------------------------------------------
+    # NAIVE BAYES RESULTS
+    # ----------------------------------------------------------
+
+    print("\nNAIVE BAYES RESULTS")
+    print("-------------------------")
+
+    print("Correct predictions:", results["correct"])
+    print("Incorrect predictions:", results["incorrect"])
+
+
+    # ----------------------------------------------------------
+    # EVALUATION METRICS
+    # ----------------------------------------------------------
+
+    print("\nEVALUATION METRICS")
+    print("-------------------------")
+
+    print("Macro-F1 Score:", round(results["macro_f1"], 4))
+    print("Accuracy:", round(results["accuracy"], 2), "%")
+
+
+    # ----------------------------------------------------------
+    # OFF-BY-TWO RESULTS PER TIER
+    # ----------------------------------------------------------
+
+    print("\nOFF-BY-TWO RATE PER TIER")
+    print("-------------------------")
+
+    for budget_tier in ["Low", "Middle", "High"]:
+
+        print(
+            budget_tier + ":",
+            results["off_by_two"][budget_tier],
+            "errors /",
+            round(results["off_by_two_rate"][budget_tier], 2),
+            "%"
+        )
+
+
+    # ----------------------------------------------------------
+    # SAMPLE PREDICTIONS
+    # ----------------------------------------------------------
+
+    print("\nSAMPLE PREDICTIONS")
+    print("-------------------------")
+
+    sample_indices = [2000, 1200, 2500, 107, 2050]
+
+    for index in sample_indices:
+
+        if index < len(X_test):
+
+            print("Project:", X_test[index])
+            print("Actual tier:", Y_test[index])
+            print("Predicted tier:", predictions[index])
+            print("\n")
