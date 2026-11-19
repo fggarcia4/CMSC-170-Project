@@ -5,7 +5,7 @@ import os
 import sys
 import ast
 import random
-import numpy
+import numpy as np
 #------------------------------------------
 
 #------------------------------------------
@@ -159,7 +159,7 @@ def clean_projects(rows):
         contractor = clean_contractor(row["contractor"])
         infraYear = clean_infra_year(row["infraYear"])
         programName = clean_program_name(row["programName"])
-        sourceOfFunds = clean_sourch_of_funds(row["sourceOfFunds"])
+        sourceOfFunds = clean_source_of_funds(row["sourceOfFunds"])
         budget = clean_budget(row["budget"])
 
         if category is None:
