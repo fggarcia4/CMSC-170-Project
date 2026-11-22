@@ -57,13 +57,11 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
 .fill{height:100%}
 .row span:last-child{text-align:right;font-variant-numeric:tabular-nums}
 .group{margin:1.25rem 0 .25rem;font-weight:600;font-family:"Instrument Sans",system-ui,sans-serif}
-.blank{border:1px dashed var(--line);min-height:4rem;margin:1rem 0}
 .verdict{border-left:4px solid var(--nb);padding:.25rem 1rem;margin:1.5rem 0;font-size:1.2rem}
 </style>
 </head>
 <body>
 <main>
-  <!-- 1. Title and group members -->
   <h1>AIdub</h1>
   <p>Predicting a project’s budget tier (low, middle or high) from its details, using Naive Bayes and a multiclass Perceptron.</p>
   <div class="team">
@@ -71,12 +69,10 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
     <span><b>Garcia, Fredmarc</b>Member</span>
   </div>
 
-  <!-- 2. Problem statement and motivation -->
   <h2>Problem statement and motivation</h2>
   <p>The problem is to predict a project’s budget tier (low, middle or high) from its details.</p>
-  <p>Infrastructure projects differ widely in cost, and reviewing tens of thousands of them by hand is impractical. We want to know whether a project’s budget tier can be predicted from basic details such as its category, location, contractor and source of funds. A reliable prediction could support early budget estimation and help flag projects whose budgets look unusual. This project also lets us compare two classification methods, Naive Bayes and a multiclass Perceptron, on a large real-world dataset.</p>
+  <p>Infrastructure projects differ widely in cost, and reviewing tens of thousands of them by hand is impractical. We want to know whether a project’s budget tier can be predicted from basic details such as its category, location, contractor and source of funds. A reliable prediction could support early budget estimation and help flag projects whose budgets look unusual. This project also lets us compare two classification methods, Naive Bayes and a multiclass Perceptron, on a large real-world dataset of DPWH infrastructure projects.</p>
 
-  <!-- 3. Dataset -->
   <h2>Dataset description</h2>
   <h3>Source</h3>
   <p>The data comes from <a href="https://data.bettergov.ph/">BetterGov.ph Open Data</a>.</p>
@@ -108,14 +104,14 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
     <tbody>
       <tr><td>2023</td><td class="n">6,871</td><td class="n">7,489</td><td class="n">11,609</td><td class="n">25,969</td></tr>
       <tr><td>2024</td><td class="n">7,609</td><td class="n">7,563</td><td class="n">13,125</td><td class="n">28,297</td></tr>
-      <tr><td>2025</td><td class="n">6,277</td><td class="n">5,718</td><td class="n">9,972</td><td class="n">21,967</td></tr>
-      <tr class="total"><td>Total</td><td class="n">20,757</td><td class="n">20,770</td><td class="n">34,706</td><td class="n">76,233</td></tr>
+      <tr><td>2025</td><td class="n">6,276</td><td class="n">5,718</td><td class="n">9,972</td><td class="n">21,966</td></tr>
+      <tr class="total"><td>Total</td><td class="n">20,756</td><td class="n">20,770</td><td class="n">34,706</td><td class="n">76,232</td></tr>
     </tbody>
   </table></div>
   <p>After cleaning, enough projects remain for prediction.</p>
 
   <h3>Features</h3>
-  <p>The dataset has 24 columns, and we originally chose three. After reviewing it, we dropped columns that had no inputs, were the same for every project, or were unique to every project. The columns below remain as the 8 inputs.</p>
+  <p>The dataset has 24 columns, and we originally chose three. After reviewing it, we dropped columns that had no inputs, were the same for every project, or were unique to every project, and kept columns with enough repeated values per unique value. The columns below remain as the 8 inputs.</p>
   <div class="scroll"><table>
     <thead><tr><th>Column</th><th class="n">Unique values</th><th class="n">Repeated values</th></tr></thead>
     <tbody>
@@ -131,24 +127,46 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
   </table></div>
 
   <h3>Preprocessing steps</h3>
-  <p>We restricted the data to 2023–2025, cleaned the projects (82,617 down to 76,233) and dropped uninformative columns. For the Perceptron, features are also standardized and a bias term is added.</p>
+  <p>We restricted the data to 2023–2025, cleaned the projects (82,617 down to 76,232) and dropped uninformative columns. For the Perceptron, features are also standardized and a bias term is added.</p>
 
-  <!-- 4. Methods -->
   <h2>Methods</h2>
-  <div class="blank" aria-hidden="true"></div>
+  <h3>Naive Bayes</h3>
+  <p>Naive Bayes is a probability-based classifier. For each tier it estimates how likely the tier is overall and how likely each input value (such as a category, province or contractor) is within that tier. It assumes the features are independent of one another given the tier, multiplies these probabilities for a new project, and predicts the tier with the highest result. This suits our data well because most inputs are categorical.</p>
 
-  <!-- 5. Experimental setup -->
+  <h3>Perceptron</h3>
+  <p>The multiclass Perceptron keeps one neuron per tier. Each neuron learns a set of weights, scores a project as the weighted sum of its standardized features plus a bias, and the tier with the highest score is the prediction.</p>
+  <div class="flow" role="img" aria-label="Perceptron flow: input features, feature standardization, add bias term, multiclass perceptron with three neurons for low, middle and high, compare scores with argmax, predicted budget tier">
+    <div class="step">Input features (X)</div><div class="arrow">↓</div>
+    <div class="step">Feature standardization</div><div class="arrow">↓</div>
+    <div class="step">Add bias term</div><div class="arrow">↓</div>
+    <div class="step">Multiclass perceptron</div><div class="arrow">↓</div>
+    <div class="neurons">
+      <div class="step n1">Low<br>N1</div>
+      <div class="step n2">Middle<br>N2</div>
+      <div class="step n3">High<br>N3</div>
+    </div><div class="arrow">↓</div>
+    <div class="step">Compare scores (argmax)</div><div class="arrow">↓</div>
+    <div class="step">Predicted budget tier</div>
+  </div>
+  <p class="cap" style="text-align:center">Figure 1. Flow of the Perceptron.</p>
+
   <h2>Experimental setup</h2>
   <h3>Data splits</h3>
-  <p>We used an 80 (training)/20 (test) split. Choosing a 20% test size ensures our evaluation is reliable without starving the model of training examples.</p>
+  <p>We used an 80 (training)/20 (test) split, taking 80% of each tier for training and 20% of each tier for testing so that tier proportions stay the same. Choosing a 20% test size ensures our evaluation is reliable without starving the model of training examples.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Set</th><th class="n">Low</th><th class="n">Middle</th><th class="n">High</th><th class="n">Total</th></tr></thead>
+    <tbody>
+      <tr><td>Training</td><td class="n">16,605</td><td class="n">16,616</td><td class="n">27,765</td><td class="n">60,986</td></tr>
+      <tr><td>Testing</td><td class="n">4,151</td><td class="n">4,154</td><td class="n">6,941</td><td class="n">15,246</td></tr>
+    </tbody>
+  </table></div>
 
   <h3>Metrics</h3>
-  <p>Accuracy, Macro-F1 and the off-by-two rate (low projects predicted as high, or high as low).</p>
+  <p>Accuracy, Macro-F1 (the average F1 across tiers, built from per-tier precision and recall) and the off-by-two rate (low projects predicted as high, or high as low). Higher is better for the first two; lower is better for the off-by-two rate.</p>
 
   <h3>Hyperparameters</h3>
   <p>Because Perceptron accuracy was low, we tried five learning rates (0.01, 0.05, 0.1, 0.2 and 0.5), from small to relatively large, to see how step size affects convergence, classification performance and training time. We used 0.1 as the baseline, and every rate gave results similar to it.</p>
 
-  <!-- 6. Results -->
   <h2>Results</h2>
   <p>For both models we went from 3 inputs to 8 by adding 5 more.</p>
 
@@ -159,19 +177,38 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
   <p>Accuracy rose from 55.37% to 64.26%. Macro-F1 again improved more visibly, from 0.4397 to 0.5945.</p>
 
   <h3>Comparing Naive Bayes and Perceptron</h3>
+  <p class="group">Correct and incorrect predictions (15,246 test projects)</p>
+  <div class="scroll"><table>
+    <thead><tr><th></th><th class="n">Naive Bayes</th><th class="n">Perceptron</th></tr></thead>
+    <tbody>
+      <tr><td>Correct</td><td class="n">10,517</td><td class="n">9,797</td></tr>
+      <tr><td>Incorrect</td><td class="n">4,729</td><td class="n">5,449</td></tr>
+    </tbody>
+  </table></div>
+  <p>Naive Bayes made 720 more correct predictions and 720 fewer incorrect ones than the Perceptron.</p>
+
   <p class="group">Accuracy</p>
   <div class="bars">
     <div class="row"><span>Naive Bayes</span><div class="track"><div class="fill" style="width:68.98%;background:var(--nb)"></div></div><span>68.98%</span></div>
-    <div class="row"><span>Perceptron</span><div class="track"><div class="fill" style="width:64.46%;background:var(--pc)"></div></div><span>64.46%</span></div>
+    <div class="row"><span>Perceptron</span><div class="track"><div class="fill" style="width:64.26%;background:var(--pc)"></div></div><span>64.26%</span></div>
   </div>
-  <p>Both algorithms land at around 60%, though Naive Bayes is higher.</p>
+  <p>Both algorithms land between roughly 64% and 69%, with Naive Bayes higher.</p>
+
+  <p class="group">Macro precision and recall</p>
+  <div class="scroll"><table>
+    <thead><tr><th></th><th class="n">Naive Bayes</th><th class="n">Perceptron</th></tr></thead>
+    <tbody>
+      <tr><td>Precision</td><td class="n">66.13%</td><td class="n">61.42%</td></tr>
+      <tr><td>Recall</td><td class="n">66.61%</td><td class="n">60.64%</td></tr>
+    </tbody>
+  </table></div>
 
   <p class="group">Macro-F1</p>
   <div class="bars">
     <div class="row"><span>Naive Bayes</span><div class="track"><div class="fill" style="width:66.19%;background:var(--nb)"></div></div><span>0.6619</span></div>
     <div class="row"><span>Perceptron</span><div class="track"><div class="fill" style="width:59.45%;background:var(--pc)"></div></div><span>0.5945</span></div>
   </div>
-  <p>Naive Bayes also has the higher Macro-F1.</p>
+  <p>Naive Bayes also has the higher Macro-F1, so it balances precision and recall better across all tiers.</p>
 
   <p class="group">Off-by-two rate</p>
   <div class="scroll"><table>
@@ -182,28 +219,26 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
       <tr><td><span class="tier" style="background:var(--high)"></span>High</td><td class="n">7.82%</td><td class="n">11.44%</td></tr>
     </tbody>
   </table></div>
-  <p>Naive Bayes has a significantly lower off-by-two rate, which indicates better results.</p>
+  <p>Naive Bayes has a significantly lower off-by-two rate, meaning fewer serious mistakes. The middle tier is 0% for both models because a middle project can only be off by one tier.</p>
 
   <p class="verdict">Based on these results, Naive Bayes predicts better than the Perceptron.</p>
 
-  <!-- 7. Discussion -->
   <h2>Discussion</h2>
   <h3>Why the methods performed as they did</h3>
-  <div class="blank" aria-hidden="true"></div>
+  <p>Naive Bayes consistently outperformed the Perceptron on correct predictions, Macro-F1, accuracy and off-by-two rate. The difference may come from how each method uses the input features. Naive Bayes works from the probability of each characteristic given a tier, which suits a dataset with many categorical features. The Perceptron instead learns weights to separate the tiers, which is harder when the relationship between the features and the tiers is more complex.</p>
   <h3>Limitations</h3>
-  <div class="blank" aria-hidden="true"></div>
+  <p>The dataset has 24 columns, but only eight could be used for prediction after filtering. Some of the remaining inputs were vague and some, such as contractor, had many unique values with few repeats, which may have affected both algorithms. The amount of usable training data is also a limit.</p>
   <h3>Possible improvements</h3>
-  <div class="blank" aria-hidden="true"></div>
+  <p>The project was limited to approaches introduced in the course, so other supervised classification algorithms were not explored. Variants of Naive Bayes and the Perceptron, in how they predict and compute, could also be tried.</p>
 
-  <!-- 8. Conclusion -->
   <h2>Conclusion</h2>
-  <div class="blank" aria-hidden="true"></div>
+  <p>This project implemented Naive Bayes and a multiclass Perceptron to classify DPWH infrastructure projects into low, middle and high budget tiers using eight project characteristics. Naive Bayes performed better across every reported metric: it reached 68.98% accuracy and a 0.6619 Macro-F1, and made fewer serious classification errors. Its probability-based approach appears better suited to these categorical features.</p>
+  <p>Even so, accurately classifying project budgets remains challenging, because the selected features may not capture every factor that influences project cost. The project still shows how machine learning can be applied to DPWH infrastructure data to sort projects into budget ranges.</p>
 
-  <!-- 9. References -->
   <h2>References</h2>
-  <div class="blank" aria-hidden="true"></div>
+  <p>BetterGov.ph Open Data. <a href="https://data.bettergov.ph/">https://data.bettergov.ph/</a></p>
+  <!-- Add any course materials or textbooks the team used here. -->
 
-  <!-- 10. Links -->
   <h2>Links</h2>
   <p><a href="https://github.com/fggarcia4/CMSC-170-Project">GitHub repository</a></p>
   <p><a href="https://www.canva.com/design/DAHbVTejx9w/8hiBbRPWs_rifwpm2d-48A/edit">Presentation slides</a></p>
