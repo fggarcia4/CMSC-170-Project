@@ -298,6 +298,74 @@ if __name__ == "__main__":
     # Test predictions
     pred = model.predict(X_test)
 
+    # ----------------------------------------------------------
+    # PRINT ONE SAMPLE EACH
+    # ----------------------------------------------------------
+
+    correct_index = 2000 # 3000
+    incorrect_index = 2500 # 3010
+    off_by_two_index = 194
+
+
+    # ----------------------------------------------------------
+    # CORRECT PREDICTION
+    # ----------------------------------------------------------
+
+    print("\n========== CORRECT PREDICTION ==========")
+
+    print("Project:", test_projects[correct_index]["description"])
+    print("Category:", test_projects[correct_index]["category"])
+    print("Component Categories:", test_projects[correct_index]["componentCategories"])
+    print("Region:", test_projects[correct_index]["region"])
+    print("Province:", test_projects[correct_index]["province"])
+    print("Contractor:", test_projects[correct_index]["contractor"])
+    print("Infra Year:", test_projects[correct_index]["infraYear"])
+    print("Program Name:", test_projects[correct_index]["programName"])
+    print("Source of Funds:", test_projects[correct_index]["sourceOfFunds"])
+    print("============================================")
+    print("Actual:", data["y_test"][correct_index])
+    print("Predicted:", pred[correct_index])
+
+
+    # ----------------------------------------------------------
+    # INCORRECT PREDICTION
+    # ----------------------------------------------------------
+
+    print("\n========== INCORRECT PREDICTION ==========")
+
+    print("Project:", test_projects[incorrect_index]["description"])
+    print("Category:", test_projects[incorrect_index]["category"])
+    print("Component Categories:", test_projects[incorrect_index]["componentCategories"])
+    print("Region:", test_projects[incorrect_index]["region"])
+    print("Province:", test_projects[incorrect_index]["province"])
+    print("Contractor:", test_projects[incorrect_index]["contractor"])
+    print("Infra Year:", test_projects[incorrect_index]["infraYear"])
+    print("Program Name:", test_projects[incorrect_index]["programName"])
+    print("Source of Funds:", test_projects[incorrect_index]["sourceOfFunds"])
+    print("============================================")
+    print("Actual:", data["y_test"][incorrect_index])
+    print("Predicted:", pred[incorrect_index])
+
+
+    # ----------------------------------------------------------
+    # INCORRECT PREDICTION (OFF BY TWO)
+    # ----------------------------------------------------------
+
+    print("\n========== INCORRECT PREDICTION (OFF BY TWO) ==========")
+
+    print("Project:", test_projects[off_by_two_index]["description"])
+    print("Category:", test_projects[off_by_two_index]["category"])
+    print("Component Categories:", test_projects[off_by_two_index]["componentCategories"])
+    print("Region:", test_projects[off_by_two_index]["region"])
+    print("Province:", test_projects[off_by_two_index]["province"])
+    print("Contractor:", test_projects[off_by_two_index]["contractor"])
+    print("Infra Year:", test_projects[off_by_two_index]["infraYear"])
+    print("Program Name:", test_projects[off_by_two_index]["programName"])
+    print("Source of Funds:", test_projects[off_by_two_index]["sourceOfFunds"])
+    print("============================================")
+    print("Actual:", data["y_test"][off_by_two_index])
+    print("Predicted:", pred[off_by_two_index])
+
     # Calculate and print metrics
     results = evaluate(data["y_test"], pred)
     print_report(results)

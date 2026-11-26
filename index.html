@@ -219,7 +219,12 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
 
   <h2>Discussion</h2>
   <h3>Why the methods performed as they did</h3>
-  <p>Naive Bayes consistently outperformed the Perceptron on correct predictions, Macro-F1, accuracy and off-by-two rate. The difference may come from how each method uses the input features. Naive Bayes works from the probability of each characteristic given a tier, which suits a dataset with many categorical features. The Perceptron instead learns weights to separate the tiers, which is harder when the relationship between the features and the tiers is more complex.</p>
+  <p>Naive Bayes consistently outperformed the Perceptron on correct predictions, Macro-F1, accuracy, and off-by-two rate. The difference may come from how each method uses the input features.</p>
+  <p>Naive Bayes works fromt he probability of each input given a tier, which suits a dataset with many categorical features. The Perceptron on the otherhand needs these converted into numers first, which can add noise and make some features count more than others.</p>
+  <p>The Perceptron also learns weights to separate the tiers, this is harder when the tiers overlap or when the relationship between the input and the tier is more complex. Naive Bayes does not have this problem, since it only needs to count how often each value appears in each tier.</p>
+  <p>However, this doesn't mean Naive Bayes is better than Perceptron in general, each method suits different kind of problems like how Naive Bayes suits our project better than Perceptron. Naive Bayes is better on projets where the data has many categorical or word-based features. Perceptron may work well with tasks with mostly numeric features and datasets where it has enough examples to learn good weights.</p>
+  
+
   <h3>Limitations</h3>
   <p>Only eight of the twenty-four columns could be used for prediction, some of the remaining columns were vague, which made them less useful for telling the tiers apart during training.</p>
   <p>Some columns, such as contractor, had many different values that rarely repeated. This gives the models little to learn from, since a value seen once or twice says a little about the tier.</p>
