@@ -221,7 +221,9 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
   <h3>Why the methods performed as they did</h3>
   <p>Naive Bayes consistently outperformed the Perceptron on correct predictions, Macro-F1, accuracy and off-by-two rate. The difference may come from how each method uses the input features. Naive Bayes works from the probability of each characteristic given a tier, which suits a dataset with many categorical features. The Perceptron instead learns weights to separate the tiers, which is harder when the relationship between the features and the tiers is more complex.</p>
   <h3>Limitations</h3>
-  <p>The dataset has 24 columns, but only eight could be used for prediction after filtering. Some of the remaining inputs were vague and some, such as contractor, had many unique values with few repeats, which may have affected both algorithms. The amount of usable training data is also a limit.</p>
+  <p>Only eight of the twenty-four columns could be used for prediction, some of the remaining columns were vague, which made them less useful for telling the tiers apart during training.</p>
+  <p>Some columns, such as contractor, had many different values that rarely repeated. This gives the models little to learn from, since a value seen once or twice says a little about the tier.</p>
+  <p>Lastly, the algorithms implemented for this project were only limited to Naive Bayes and Perceptron, other algorithms might have worked better on this dataset.</p>
   <h3>Possible improvements</h3>
   <p>The project was limited to approaches introduced in the course, so other supervised classification algorithms were not explored. Variants of Naive Bayes and the Perceptron, in how they predict and compute, could also be tried.</p>
 
@@ -235,6 +237,8 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
   <p>VanderPlas, J. (2019). In depth: Naive bayes classification | python data science handbook. Github.Io. https://jakevdp.github.io/PythonDataScienceHandbook/05.05-naive-bayes.html</p>
   <p>GeeksforGeeks. (2023, November 13). Gaussian naive Bayes. GeeksforGeeks. https://www.geeksforgeeks.org/machine-learning/gaussian-naive-bayes/</p>
   <p>Sunia Tanweer. (2025, February 8). Implementing naive Bayes algorithm from scratch in Python. Medium. https://medium.com/@stanweer/implementing-naive-bayes-algorithm-from-scratch-in-python-a6df9bcfb173</p>
+  <p>Normal (gaussian) distribution. (n.d.). Www.W3schools.Com. Retrieved November 26, 2026, from https://www.w3schools.com/python/numpy/numpy_random_normal.asp</p>
+  <p>What is Stratified Random Sampling? Definition and Python Example. (2022, November 15). freeCodeCamp.Org. https://www.freecodecamp.org/news/what-is-stratified-random-sampling-definition-and-python-example/</p>
 
   <h2>Links</h2>
   <p><a href="https://github.com/fggarcia4/CMSC-170-Project">GitHub repository</a></p>
