@@ -63,14 +63,14 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
 <body>
 <main>
   <h1>AIdub</h1>
-  <p>Predicting a project’s budget tier (low, middle or high) from its details, using Naive Bayes and a multiclass Perceptron.</p>
+  <p>Predicting a project’s budget tier (low, middle or high) using specific inputs from the dataset, using Naive Bayes and a multiclass Perceptron.</p>
   <div class="team">
     <span><b>Rembulat, Francine</b>Leader</span>
     <span><b>Garcia, Fredmarc</b>Member</span>
   </div>
 
   <h2>Problem statement and motivation</h2>
-  <p>The problem is to predict a project’s budget tier (low, middle or high) from its details.</p>
+  <p>The problem is to predict a project’s budget tier (low, middle or high) with just using specific inputs from the dataset.</p>
   <p>Infrastructure projects differ widely in cost, and reviewing tens of thousands of them by hand is impractical. We want to know whether a project’s budget tier can be predicted from basic details such as its category, location, contractor and source of funds. A reliable prediction could support early budget estimation and help flag projects whose budgets look unusual. This project also lets us compare two classification methods, Naive Bayes and a multiclass Perceptron, on a large real-world dataset of DPWH infrastructure projects.</p>
 
   <h2>Dataset description</h2>
@@ -168,13 +168,7 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
   <p>Because Perceptron accuracy was low, we tried five learning rates (0.01, 0.05, 0.1, 0.2 and 0.5), from small to relatively large, to see how step size affects convergence, classification performance and training time. We used 0.1 as the baseline, and every rate gave results similar to it.</p>
 
   <h2>Results</h2>
-  <p>For both models we went from 3 inputs to 8 by adding 5 more.</p>
-
-  <h3>Naive Bayes</h3>
-  <p>Accuracy rose from 68.09% to 68.98%. The Macro-F1 improvement was much more visible, going from 0.4648 to 0.6619.</p>
-
-  <h3>Perceptron</h3>
-  <p>Accuracy rose from 55.37% to 64.26%. Macro-F1 again improved more visibly, from 0.4397 to 0.5945.</p>
+  <p>Here are the results after training and testing the algorithm.</p>
 
   <h3>Comparing Naive Bayes and Perceptron</h3>
   <p class="group">Correct and incorrect predictions (15,246 test projects)</p>
@@ -237,7 +231,10 @@ caption{caption-side:top;text-align:left;padding:.5rem .8rem 0}
 
   <h2>References</h2>
   <p>BetterGov.ph Open Data. <a href="https://data.bettergov.ph/">https://data.bettergov.ph/</a></p>
-  <!-- Add any course materials or textbooks the team used here. -->
+  <p>GeeksforGeeks. (2017, March 3). Naive Bayes classifiers. GeeksforGeeks. https://www.geeksforgeeks.org/machine-learning/naive-bayes-classifiers/</p>
+  <p>VanderPlas, J. (2019). In depth: Naive bayes classification | python data science handbook. Github.Io. https://jakevdp.github.io/PythonDataScienceHandbook/05.05-naive-bayes.html</p>
+  <p>GeeksforGeeks. (2023, November 13). Gaussian naive Bayes. GeeksforGeeks. https://www.geeksforgeeks.org/machine-learning/gaussian-naive-bayes/</p>
+  <p>Sunia Tanweer. (2025, February 8). Implementing naive Bayes algorithm from scratch in Python. Medium. https://medium.com/@stanweer/implementing-naive-bayes-algorithm-from-scratch-in-python-a6df9bcfb173</p>
 
   <h2>Links</h2>
   <p><a href="https://github.com/fggarcia4/CMSC-170-Project">GitHub repository</a></p>
