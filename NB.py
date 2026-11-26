@@ -13,7 +13,7 @@ class NaiveBayes:
         # eight input features
         self.features = [
             "category",
-            "componentCategory",
+            "componentCategories",
             "region",
             "province",
             "contractor",
@@ -24,7 +24,7 @@ class NaiveBayes:
 
         # 2 types of features used
         # numeric (digits) and categorical (characters)
-        self.numeric_features = ["infraYear"] # infrayear is the only numeric feature aside for target (budget)
+        self.numeric_features = ["infraYear"] # infraYear is the only numeric feature aside for target (budget)
 
         # categorical features
         self.categorical_features = [
@@ -248,7 +248,7 @@ class NaiveBayes:
 
 
             # --------------------------------------------------
-            # INFRAYEAR PROBABILITY
+            # infraYear PROBABILITY
             # --------------------------------------------------
 
             for feature in self.numeric_features:
@@ -430,7 +430,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------
 
     print("\nNAIVE BAYES DATA")
-    print("-------------------------")
+    print("============================================")
 
     print("Training records:", len(X_train))
     print("Testing records:", len(X_test))
@@ -457,6 +457,74 @@ if __name__ == "__main__":
 
         predictions.append(prediction)
 
+    # ----------------------------------------------------------
+    # PRINT ONE SAMPLE EACH
+    # ----------------------------------------------------------
+
+    correct_index = 2000 # 3000
+    incorrect_index = 2500 # 3010
+    off_by_two_index = 194
+
+
+    # ----------------------------------------------------------
+    # CORRECT PREDICTION
+    # ----------------------------------------------------------
+
+    print("\n========== CORRECT PREDICTION ==========")
+
+    print("Project:", X_test[correct_index]["description"])
+    print("Category:", X_test[correct_index]["category"])
+    print("Component Categories:", X_test[correct_index]["componentCategories"])
+    print("Region:", X_test[correct_index]["region"])
+    print("Province:", X_test[correct_index]["province"])
+    print("Contractor:", X_test[correct_index]["contractor"])
+    print("Infra Year:", X_test[correct_index]["infraYear"])
+    print("Program Name:", X_test[correct_index]["programName"])
+    print("Source of Funds:", X_test[correct_index]["sourceOfFunds"])
+    print("============================================")
+    print("Actual:", Y_test[correct_index])
+    print("Predicted:", predictions[correct_index])
+
+
+    # ----------------------------------------------------------
+    # INCORRECT PREDICTION
+    # ----------------------------------------------------------
+
+    print("\n========== INCORRECT PREDICTION ==========")
+
+    print("Project:", X_test[incorrect_index]["description"])
+    print("Category:", X_test[incorrect_index]["category"])
+    print("Component Categories:", X_test[incorrect_index]["componentCategories"])
+    print("Region:", X_test[incorrect_index]["region"])
+    print("Province:", X_test[incorrect_index]["province"])
+    print("Contractor:", X_test[incorrect_index]["contractor"])
+    print("Infra Year:", X_test[incorrect_index]["infraYear"])
+    print("Program Name:", X_test[incorrect_index]["programName"])
+    print("Source of Funds:", X_test[incorrect_index]["sourceOfFunds"])
+    print("============================================")
+    print("Actual:", Y_test[incorrect_index])
+    print("Predicted:", predictions[incorrect_index])
+
+
+    # ----------------------------------------------------------
+    # INCORRECT PREDICTION (OFF BY TWO)
+    # ----------------------------------------------------------
+
+    print("\n========== INCORRECT PREDICTION (OFF BY TWO) ==========")
+
+    print("Project:", X_test[off_by_two_index]["description"])
+    print("Category:", X_test[off_by_two_index]["category"])
+    print("Component Categories:", X_test[off_by_two_index]["componentCategories"])
+    print("Region:", X_test[off_by_two_index]["region"])
+    print("Province:", X_test[off_by_two_index]["province"])
+    print("Contractor:", X_test[off_by_two_index]["contractor"])
+    print("Infra Year:", X_test[off_by_two_index]["infraYear"])
+    print("Program Name:", X_test[off_by_two_index]["programName"])
+    print("Source of Funds:", X_test[off_by_two_index]["sourceOfFunds"])
+    print("============================================")
+    print("Actual:", Y_test[off_by_two_index])
+    print("Predicted:", predictions[off_by_two_index])
+
 
     # ----------------------------------------------------------
     # EVALUATION
@@ -464,24 +532,12 @@ if __name__ == "__main__":
 
     results = evaluate_model(Y_test, predictions)
 
-
-    # ----------------------------------------------------------
-    # NAIVE BAYES RESULTS
-    # ----------------------------------------------------------
-
-    print("\nNAIVE BAYES RESULTS")
-    print("-------------------------")
-
-    print("Correct predictions:", results["correct"])
-    print("Incorrect predictions:", results["incorrect"])
-
-
     # ----------------------------------------------------------
     # EVALUATION METRICS
     # ----------------------------------------------------------
 
     print("\nEVALUATION METRICS")
-    print("-------------------------")
+    print("============================================")
 
     print("Macro-F1 Score:", round(results["macro_f1"], 4))
     print("Accuracy:", round(results["accuracy"], 2), "%")
@@ -492,7 +548,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------
 
     print("\nOFF-BY-TWO RATE PER TIER")
-    print("-------------------------")
+    print("============================================")
 
     for budget_tier in ["Low", "Middle", "High"]:
 
@@ -504,21 +560,3 @@ if __name__ == "__main__":
             "%"
         )
 
-
-    # ----------------------------------------------------------
-    # SAMPLE PREDICTIONS
-    # ----------------------------------------------------------
-
-    print("\nSAMPLE PREDICTIONS")
-    print("-------------------------")
-
-    sample_indices = [2000, 1200, 2500, 107, 2050]
-
-    for index in sample_indices:
-
-        if index < len(X_test):
-
-            print("Project:", X_test[index])
-            print("Actual tier:", Y_test[index])
-            print("Predicted tier:", predictions[index])
-            print("\n")
